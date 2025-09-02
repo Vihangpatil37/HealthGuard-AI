@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthGuard AI - Public Health Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+            min-height: 100vh;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%);
+        }
+        
+        .health-card {
+            transition: all 0.3s ease;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        .health-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 114, 255, 0.15);
+        }
+        
+        .chat-container {
+            height: 500px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+        
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #0072ff;
+            border-radius: 3px;
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%);
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+            max-width: 70%;
+            margin-left: auto;
+        }
+        
+        .bot-message {
+            background: #f8fafc;
+            color: #334155;
+            border-radius: 18px 18px 18px 4px;
+            max-width: 70%;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #0072ff;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        /* Side Tool Styles */
+        .side-tool {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+        }
+        
+        .side-tool.active {
+            right: 0;
+        }
+        
+        .chat-toggle {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #10b981;
+            color: white;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            z-index: 999;
+            transition: all 0.3s ease;
+        }
+        
+        .chat-toggle:hover {
+            background: #059669;
+            transform: scale(1.1);
+        }
+        
+        .chat-toggle i {
+            font-size: 28px;
+        }
+        
+        .tool-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .tool-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .mini-chat-container {
+            height: calc(100vh - 200px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .mini-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f8fafc;
+        }
+        
+        .mini-chat-input {
+            padding: 15px;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Active nav link style */
+        .nav-active {
+            color: #93c5fd;
+            font-weight: 600;
+        }
+        
+        /* Daily Life Awareness Styles */
+        .awareness-card {
+            transition: all 0.3s ease;
+            border-radius: 16px;
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .awareness-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .awareness-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .awareness-tip {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .awareness-tip i {
+            margin-right: 0.5rem;
+            color: #10b981;
+        }
+        
+        /* Prevention Daily Life Styles */
+        .prevention-card {
+            transition: all 0.3s ease;
+            border-radius: 16px;
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(to bottom, #f0fdf4, #dcfce7);
+        }
+        
+        .prevention-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.15);
+        }
+        
+        .prevention-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .prevention-tip {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .prevention-tip i {
+            margin-right: 0.5rem;
+            color: #059669;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Chat Side Tool Toggle Button -->
+    <div class="chat-toggle" id="chatToggle">
+        <i class="fas fa-comments"></i>
+    </div>
+    
+    <!-- Side Tool Overlay -->
+    <div class="tool-overlay" id="toolOverlay"></div>
+    
+    <!-- Chat Side Tool -->
+    <div class="side-tool" id="chatTool">
+        <div class="gradient-bg text-white p-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-robot text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold">HealthGuard AI</h3>
+                        <p class="text-blue-100 text-sm">Online • 24/7 Support</p>
+                    </div>
+                </div>
+                <button id="closeChat" class="text-white hover:text-blue-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="mini-chat-container">
+            <div class="mini-chat-messages" id="miniChatMessages">
+                <div class="bot-message p-4 mb-4">
+                    <p>Hello! I'm your HealthGuard AI assistant. I'm here to provide information about diseases, symptoms, prevention, and general health advice. How can I help you today?</p>
+                </div>
+            </div>
+            
+            <div class="mini-chat-input">
+                <div class="flex space-x-3">
+                    <input type="text" id="miniChatInput" placeholder="Type your health question here..." class="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button id="miniSendButton" class="bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="mt-3 flex space-x-2">
+                    <span class="text-sm text-gray-500">Quick questions:</span>
+                    <button class="text-sm text-blue-600 hover:text-blue-800 mini-quick-btn">Flu symptoms</button>
+                    <button class="text-sm text-blue-600 hover:text-blue-800 mini-quick-btn">Vaccination info</button>
+                    <button class="text-sm text-blue-600 hover:text-blue-800 mini-quick-btn">Prevention tips</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Header -->
+    <header class="gradient-bg text-white">
+        <div class="container mx-auto px-6 py-8">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-brain text-2xl text-white"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold">HealthGuard AI</h1>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#features" class="nav-link hover:text-blue-100 transition-colors">Features</a>
+                    <a href="#diseases" class="nav-link hover:text-blue-100 transition-colors">Diseases</a>
+                    <a href="#prevention" class="nav-link hover:text-blue-100 transition-colors">Prevention</a>
+                </nav>
+                <a href="login.html" class="bg-white text-blue-600 px-6 py-2 rounded-full font-semibold hover:bg-blue-50 transition-colors">
+                      Get Started
+                </a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Hero Section -->
+    <section class="gradient-bg text-white py-20">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-5xl font-bold mb-6">AI-Powered Public Health Assistance</h2>
+                    <p class="text-xl mb-8 opacity-90">Get instant, accurate information about diseases, symptoms, prevention methods, and treatment options from our advanced AI chatbot.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="bg-white text-blue-600 px-8 py-3 rounded-full font-semibold hover:bg-blue-50 transition-colors">
+                            Learn More
+                        </a>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="bg-white/10 rounded-2xl p-6 backdrop-blur-sm">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/1cac4112-3f48-4604-bd65-c4ed12aa3433.png" alt="Modern AI healthcare interface showing disease analytics and health monitoring dashboard with clean blue and white design" class="rounded-xl w-full h-auto">
+                    </div>
+                    <div class="absolute -bottom-6 -left-6 bg-white rounded-2xl p-4 shadow-xl">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-shield-alt text-green-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">24/7 Protection</p>
+                                <p class="font-semibold text-gray-800">Health CheckUp</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">Advanced AI Features</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Our chatbot uses cutting-edge AI technology to provide comprehensive public health information and support.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="health-card bg-white p-8 border border-gray-100">
+                    <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-robot text-3xl text-blue-600"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Smart Diagnosis</h3>
+                    <p class="text-gray-600 mb-6">AI-powered symptom analysis and preliminary diagnosis based on medical knowledge.</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">Symptom assessment</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">Risk evaluation</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">Personalized advice</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="health-card bg-white p-8 border border-gray-100">
+                    <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-heartbeat text-3xl text-green-600"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Prevention Guide</h3>
+                    <p class="text-gray-600 mb-6">Comprehensive prevention strategies and health maintenance recommendations.</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">Vaccination info</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">Hygiene practices</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">Lifestyle tips</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="health-card bg-white p-8 border border-gray-100">
+                    <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-chart-line text-3xl text-purple-600"></i>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Real-time Updates</h3>
+                    <p class="text-gray-600 mb-6">Stay informed with the latest disease outbreaks and health advisories.</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">Outbreak alerts</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">Health news</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span class="text-gray-700">Trend analysis</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Disease Awareness Section -->
+    <section id="diseases" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">Disease Awareness</h2>
+                <p class="text-xl text-gray-600">Learn about common diseases and their prevention methods</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="health-card bg-white rounded-2xl overflow-hidden">
+                    <div class="h-48 bg-blue-100 relative">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/53a4f11f-07c5-4f11-9e3b-e2d00066ab92.png" alt="Medical illustration of influenza virus particles with detailed structure and blue color scheme" class="w-full h-full object-cover">
+                        <div class="absolute top-4 left-4 bg-white px-3 py-1 rounded-full text-sm font-semibold text-blue-600">
+                            Respiratory
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Influenza (Flu)</h3>
+                        <p class="text-gray-600 mb-4">A contagious respiratory illness caused by influenza viruses.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Prevention: Vaccination</span>
+                            <button class="text-blue-600 hover:text-blue-800 font-semibold">Learn More</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="health-card bg-white rounded-2xl overflow-hidden">
+                    <div class="h-48 bg-green-100 relative">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/185f8ad0-71bd-4249-a3d2-703eed7e3883.png" alt="COVID-19 coronavirus particle representation with red spike proteins and detailed scientific visualization" class="w-full h-full object-cover">
+                        <div class="absolute top-4 left-4 bg-white px-3 py-1 rounded-full text-sm font-semibold text-green-600">
+                            Pandemic
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">COVID-19</h3>
+                        <p class="text-gray-600 mb-4">Respiratory disease caused by the SARS-CoV-2 coronavirus.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Prevention: Masks + Vaccine</span>
+                            <button class="text-blue-600 hover:text-blue-800 font-semibold">Learn More</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="health-card bg-white rounded-2xl overflow-hidden">
+                    <div class="h-48 bg-yellow-100 relative">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/7cef0951-2b1b-4e64-9fad-4e9b22c7f673.png" alt="Mosquito vector illustration showing dengue virus transmission with tropical background and prevention elements" class="w-full h-full object-cover">
+                        <div class="absolute top-4 left-4 bg-white px-3 py-1 rounded-full text-sm font-semibold text-yellow-600">
+                            Vector-borne
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Dengue Fever</h3>
+                        <p class="text-gray-600 mb-4">Mosquito-borne tropical disease caused by the dengue virus.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Prevention: Mosquito control</span>
+                            <button class="text-blue-600 hover:text-blue-800 font-semibold">Learn More</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Daily Life Awareness Section -->
+            <div class="mt-16">
+                <div class="text-center mb-8">
+                    <h3 class="text-3xl font-bold text-gray-800 mb-2">Daily Life Awareness</h3>
+                    <p class="text-lg text-gray-600">Practical health tips for your everyday activities</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="awareness-card bg-white p-6 border border-gray-100">
+                        <div class="awareness-icon bg-blue-100 mx-auto">
+                            <i class="fas fa-home text-3xl text-blue-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">At Home</h4>
+                        <p class="text-gray-600 mb-4 text-center">Keep your living space clean and healthy</p>
+                        <div class="space-y-2">
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Regular disinfection</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Proper ventilation</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Clean water sources</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="awareness-card bg-white p-6 border border-gray-100">
+                        <div class="awareness-icon bg-green-100 mx-auto">
+                            <i class="fas fa-briefcase text-3xl text-green-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">At Work</h4>
+                        <p class="text-gray-600 mb-4 text-center">Maintain health in your workplace</p>
+                        <div class="space-y-2">
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Ergonomic setup</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Regular breaks</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Hand hygiene</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="awareness-card bg-white p-6 border border-gray-100">
+                        <div class="awareness-icon bg-yellow-100 mx-auto">
+                            <i class="fas fa-utensils text-3xl text-yellow-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">Food Safety</h4>
+                        <p class="text-gray-600 mb-4 text-center">Prevent foodborne illnesses</p>
+                        <div class="space-y-2">
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Cook thoroughly</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Clean surfaces</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Store properly</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="awareness-card bg-white p-6 border border-gray-100">
+                        <div class="awareness-icon bg-purple-100 mx-auto">
+                            <i class="fas fa-bus text-3xl text-purple-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">Travel Safety</h4>
+                        <p class="text-gray-600 mb-4 text-center">Stay healthy while traveling</p>
+                        <div class="space-y-2">
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Vaccinations</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Hand sanitizer</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Safe water</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                    <div class="awareness-card bg-white p-6 border border-gray-100">
+                        <div class="awareness-icon bg-red-100 mx-auto">
+                            <i class="fas fa-dumbbell text-3xl text-red-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">Exercise</h4>
+                        <p class="text-gray-600 mb-4 text-center">Stay active and fit</p>
+                        <div class="space-y-2">
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">30 mins daily</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Warm up properly</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Stay hydrated</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="awareness-card bg-white p-6 border border-gray-100">
+                        <div class="awareness-icon bg-indigo-100 mx-auto">
+                            <i class="fas fa-bed text-3xl text-indigo-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">Sleep Health</h4>
+                        <p class="text-gray-600 mb-4 text-center">Quality rest for better health</p>
+                        <div class="space-y-2">
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">7-9 hours</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Dark room</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Regular schedule</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="awareness-card bg-white p-6 border border-gray-100">
+                        <div class="awareness-icon bg-teal-100 mx-auto">
+                            <i class="fas fa-brain text-3xl text-teal-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">Mental Health</h4>
+                        <p class="text-gray-600 mb-4 text-center">Take care of your mind</p>
+                        <div class="space-y-2">
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Manage stress</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Stay connected</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Seek help</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="awareness-card bg-white p-6 border border-gray-100">
+                        <div class="awareness-icon bg-pink-100 mx-auto">
+                            <i class="fas fa-users text-3xl text-pink-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">Social Health</h4>
+                        <p class="text-gray-600 mb-4 text-center">Healthy relationships matter</p>
+                        <div class="space-y-2">
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Respect boundaries</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Communicate</span>
+                            </div>
+                            <div class="awareness-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Support others</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Prevention Daily Life Section -->
+            <div class="mt-16">
+                <div class="text-center mb-8">
+                    <h3 class="text-3xl font-bold text-gray-800 mb-2">Prevention Daily Life</h3>
+                    <p class="text-lg text-gray-600">Integrate disease prevention into your everyday routines</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="prevention-card p-6 border border-green-200">
+                        <div class="prevention-icon mx-auto">
+                            <i class="fas fa-soap text-3xl text-green-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">Hand Hygiene</h4>
+                        <p class="text-gray-700 mb-4 text-center">Prevent infections through proper hand cleaning</p>
+                        <div class="space-y-2">
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Wash for 20 seconds</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Before eating/after toilet</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Use alcohol-based sanitizer</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="prevention-card p-6 border border-green-200">
+                        <div class="prevention-icon mx-auto">
+                            <i class="fas fa-mask text-3xl text-green-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">Face Protection</h4>
+                        <p class="text-gray-700 mb-4 text-center">Shield yourself from airborne pathogens</p>
+                        <div class="space-y-2">
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Wear in crowded places</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Cover coughs/sneezes</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Avoid touching face</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="prevention-card p-6 border border-green-200">
+                        <div class="prevention-icon mx-auto">
+                            <i class="fas fa-syringe text-3xl text-green-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">Vaccination</h4>
+                        <p class="text-gray-700 mb-4 text-center">Stay protected with recommended immunizations</p>
+                        <div class="space-y-2">
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Annual flu shot</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">COVID-19 boosters</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Childhood immunizations</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="prevention-card p-6 border border-green-200">
+                        <div class="prevention-icon mx-auto">
+                            <i class="fas fa-shield-virus text-3xl text-green-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">Immune Support</h4>
+                        <p class="text-gray-700 mb-4 text-center">Strengthen your body's natural defenses</p>
+                        <div class="space-y-2">
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Balanced nutrition</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Adequate sleep</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Regular exercise</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                    <div class="prevention-card p-6 border border-green-200">
+                        <div class="prevention-icon mx-auto">
+                            <i class="fas fa-house-user text-3xl text-green-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">Home Safety</h4>
+                        <p class="text-gray-700 mb-4 text-center">Create a healthy living environment</p>
+                        <div class="space-y-2">
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Regular cleaning</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Good ventilation</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Pest control</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="prevention-card p-6 border border-green-200">
+                        <div class="prevention-icon mx-auto">
+                            <i class="fas fa-people-arrows text-3xl text-green-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">Social Distancing</h4>
+                        <p class="text-gray-700 mb-4 text-center">Maintain safe space between people</p>
+                        <div class="space-y-2">
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">6 feet apart</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Avoid crowds</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Virtual gatherings</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="prevention-card p-6 border border-green-200">
+                        <div class="prevention-icon mx-auto">
+                            <i class="fas fa-apple-alt text-3xl text-green-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">Healthy Diet</h4>
+                        <p class="text-gray-700 mb-4 text-center">Nourish your body with proper nutrition</p>
+                        <div class="space-y-2">
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Fruits & vegetables</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Lean proteins</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Limit processed foods</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="prevention-card p-6 border border-green-200">
+                        <div class="prevention-icon mx-auto">
+                            <i class="fas fa-tint text-3xl text-green-600"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-3 text-center">Hydration</h4>
+                        <p class="text-gray-700 mb-4 text-center">Maintain proper fluid intake</p>
+                        <div class="space-y-2">
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">8 glasses daily</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">More when active</span>
+                            </div>
+                            <div class="prevention-tip">
+                                <i class="fas fa-check-circle"></i>
+                                <span class="text-sm">Clean water sources</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Prevention Tips Section -->
+    <section id="prevention" class="py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">Prevention & Safety Tips</h2>
+                <p class="text-xl text-gray-600">Essential practices to protect yourself and your community</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="text-center p-6">
+                    <div class="w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-hands-wash text-3xl text-blue-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Hand Hygiene</h3>
+                    <p class="text-gray-600">Wash hands regularly with soap and water for at least 20 seconds.</p>
+                </div>
+                
+                <div class="text-center p-6">
+                    <div class="w-20 h-20 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-syringe text-3xl text-green-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Vaccination</h3>
+                    <p class="text-gray-600">Stay up-to-date with recommended vaccinations for optimal protection.</p>
+                </div>
+                
+                <div class="text-center p-6">
+                    <div class="w-20 h-20 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-people-arrows text-3xl text-purple-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Social Distancing</h3>
+                    <p class="text-gray-600">Maintain safe distance in public spaces to reduce transmission risk.</p>
+                </div>
+                
+                <div class="text-center p-6">
+                    <div class="w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-head-side-mask text-3xl text-red-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Mask Usage</h3>
+                    <p class="text-gray-600">Wear masks in crowded places to protect yourself and others.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Chatbot Section -->
+    <section id="chat" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">Chat with HealthGuard AI</h2>
+                <p class="text-xl text-gray-600">Get instant answers to your health questions</p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto">
+                <div class="chat-container bg-white">
+                    <div class="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-white">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                                <i class="fas fa-robot text-2xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold">HealthGuard AI Assistant</h3>
+                                <p class="text-blue-100">Online • 24/7 Support</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-messages p-6 bg-gray-50">
+                        <div class="bot-message p-4 mb-4">
+                            <p>Hello! I'm your HealthGuard AI assistant. I'm here to provide information about diseases, symptoms, prevention, and general health advice. How can I help you today?</p>
+                        </div>
+                        
+                        <div class="user-message p-4 mb-4">
+                            <p>What are the common symptoms of COVID-19?</p>
+                        </div>
+                        
+                        <div class="bot-message p-4 mb-4">
+                            <p>Common symptoms of COVID-19 include fever, cough, fatigue, loss of taste or smell, sore throat, headache, and difficulty breathing. Symptoms can range from mild to severe. Would you like more specific information about prevention or treatment?</p>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-white border-t border-gray-200">
+                        <div class="flex space-x-3">
+                            <input type="text" placeholder="Type your health question here..." class="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button class="bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div class="mt-3 flex space-x-2">
+                            <span class="text-sm text-gray-500">Quick questions:</span>
+                            <button class="text-sm text-blue-600 hover:text-blue-800">Flu symptoms</button>
+                            <button class="text-sm text-blue-600 hover:text-blue-800">Vaccination info</button>
+                            <button class="text-sm text-blue-600 hover:text-blue-800">Prevention tips</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-center">
+                    <p class="text-gray-600 mb-4">Powered by advanced AI technology for accurate health information</p>
+                    <div class="flex justify-center space-x-6">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-shield-alt text-green-500"></i>
+                            <span class="text-sm text-gray-600">HIPAA Compliant</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-lock text-blue-500"></i>
+                            <span class="text-sm text-gray-600">Secure & Private</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-check-circle text-purple-500"></i>
+                            <span class="text-sm text-gray-600">Medically Verified</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">HealthGuard AI</h3>
+                    <p class="text-gray-400">Advanced AI-powered public health assistance for disease awareness and prevention.</p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Home</a></li>
+                        <li><a href="#features" class="text-gray-400 hover:text-white">Features</a></li>
+                        <li><a href="#diseases" class="text-gray-400 hover:text-white">Diseases</a></li>
+                        <li><a href="#prevention" class="text-gray-400 hover:text-white">Prevention</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-4">Resources</h4>
+                    <ul class="space-y-2">
+                        <li><a href="chatbox.html" class="text-gray-400 hover:text-white">Health Chat</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Research Papers</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Emergency Contacts</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-4">Contact</h4>
+                    <div class="space-y-2 text-gray-400">
+                        <p><i class="fas fa-envelope mr-2"></i> support@healthguardai.com</p>
+                        <p><i class="fas fa-phone mr-2"></i> +1 (555) 123-HELP</p>
+                        <p><i class="fas fa-map-marker-alt mr-2"></i> 123 Health St, Medical District</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+                <p class="text-gray-400">© 2024 HealthGuard AI. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Side Tool Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chat tool elements
+            const chatToggle = document.getElementById('chatToggle');
+            const chatTool = document.getElementById('chatTool');
+            const closeChat = document.getElementById('closeChat');
+            const toolOverlay = document.getElementById('toolOverlay');
+            const miniChatMessages = document.getElementById('miniChatMessages');
+            const miniChatInput = document.getElementById('miniChatInput');
+            const miniSendButton = document.getElementById('miniSendButton');
+            const miniQuickBtns = document.querySelectorAll('.mini-quick-btn');
+            
+            // Navigation functionality
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section[id]');
+            
+            // Function to handle active nav link
+            function updateActiveNavLink() {
+                const scrollPosition = window.scrollY + 100;
+                
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.offsetHeight;
+                    const sectionId = section.getAttribute('id');
+                    
+                    if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('nav-active');
+                            if (link.getAttribute('href') === `#${sectionId}`) {
+                                link.classList.add('nav-active');
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // Update active nav link on scroll
+            window.addEventListener('scroll', updateActiveNavLink);
+            
+            // Handle nav link clicks
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links
+                    navLinks.forEach(l => l.classList.remove('nav-active'));
+                    
+                    // Add active class to clicked link
+                    this.classList.add('nav-active');
+                    
+                    // Scroll to section
+                    const targetId = this.getAttribute('href');
+                    const targetSection = document.querySelector(targetId);
+                    
+                    if (targetSection) {
+                        window.scrollTo({
+                            top: targetSection.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+            
+            // Initialize active nav link on page load
+            updateActiveNavLink();
+            
+            // Toggle chat tool
+            chatToggle.addEventListener('click', function() {
+                chatTool.classList.add('active');
+                toolOverlay.classList.add('active');
+            });
+            
+            // Close side tool
+            function closeSideTool() {
+                chatTool.classList.remove('active');
+                toolOverlay.classList.remove('active');
+            }
+            
+            closeChat.addEventListener('click', closeSideTool);
+            toolOverlay.addEventListener('click', closeSideTool);
+            
+            // Mini chat functionality
+            function addMiniMessage(text, isUser = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = isUser ? 'user-message p-4 mb-4' : 'bot-message p-4 mb-4';
+                messageDiv.innerHTML = `<p>${text}</p>`;
+                miniChatMessages.appendChild(messageDiv);
+                miniChatMessages.scrollTop = miniChatMessages.scrollHeight;
+            }
+            
+            async function getMiniAIResponse(question) {
+    try {
+        const res = await fetch('http://localhost:5000/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: question })
+        });
+
+        const data = await res.json();
+        if (data.response) {
+            return data.response;
+        } else {
+            return "⚠️ Sorry, I couldn't fetch a response. Please try again.";
+        }
+    } catch (error) {
+        console.error(error);
+        return "⚠️ Server error. Please try again later.";
+    }
+}
+
+            
+miniSendButton.addEventListener('click', async function() {
+    const question = miniChatInput.value.trim();
+    if (question) {
+        addMiniMessage(question, true);
+        miniChatInput.value = '';
+        
+        // Simulate AI typing
+        const typingIndicator = document.createElement('div');
+        typingIndicator.className = 'bot-message p-4 mb-4';
+        typingIndicator.innerHTML = `
+            <div class="typing-indicator">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            </div>
+        `;
+        miniChatMessages.appendChild(typingIndicator);
+        miniChatMessages.scrollTop = miniChatMessages.scrollHeight;
+        
+        // Simulate AI response after delay
+        const response = await getMiniAIResponse(question);
+        miniChatMessages.removeChild(typingIndicator);
+        addMiniMessage(response);
+    }
+});
+            
+            miniChatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    miniSendButton.click();
+                }
+            });
+            
+            // Quick question buttons for mini chat
+            miniQuickBtns.forEach(button => {
+                button.addEventListener('click', function() {
+                    miniChatInput.value = this.textContent;
+                    miniSendButton.click();
+                });
+            });
+            
+            // Main chat functionality
+            const chatMessages = document.querySelector('.chat-messages');
+            const chatInput = document.querySelector('input[type="text"]');
+            const sendButton = document.querySelector('.chat-container button');
+            
+            // Sample responses for demo purposes
+            const sampleResponses = {
+                'flu symptoms': 'Common flu symptoms include fever, cough, sore throat, runny nose, body aches, headache, chills, and fatigue. Most people recover within 1-2 weeks.',
+                'vaccination info': 'Vaccinations help protect against serious diseases. Common vaccines include flu shot, COVID-19 vaccine, MMR, and others. Consult your healthcare provider for personalized advice.',
+                'prevention tips': 'Key prevention methods: frequent hand washing, wearing masks in crowded areas, maintaining social distance, getting vaccinated, and avoiding touching your face.'
+            };
+            
+            function addMessage(text, isUser = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = isUser ? 'user-message p-4 mb-4' : 'bot-message p-4 mb-4';
+                messageDiv.innerHTML = `<p>${text}</p>`;
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            async function getAIResponse(question) {
+    try {
+        const res = await fetch('http://localhost:5000/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: question })
+        });
+
+        const data = await res.json();
+        if (data.response) {
+            return data.response;
+        } else {
+            return "⚠️ Sorry, I couldn't fetch a response. Please try again.";
+        }
+    } catch (error) {
+        console.error(error);
+        return "⚠️ Server error. Please try again later.";
+    }
+}
+
+            
+sendButton.addEventListener('click', async function() {
+    const question = chatInput.value.trim();
+    if (question) {
+        addMessage(question, true);
+        chatInput.value = '';
+        
+        // Simulate AI typing
+        const typingIndicator = document.createElement('div');
+        typingIndicator.className = 'bot-message p-4 mb-4';
+        typingIndicator.innerHTML = `
+            <div class="typing-indicator">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            </div>
+        `;
+        chatMessages.appendChild(typingIndicator);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Simulate AI response after delay
+        const response = await getAIResponse(question);
+        chatMessages.removeChild(typingIndicator);
+        addMessage(response);
+
+    }
+});
+            
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendButton.click();
+                }
+            });
+            
+            // Quick question buttons
+            document.querySelectorAll('.chat-messages + div button').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (!this.id) { // Exclude the send button
+                        chatInput.value = this.textContent;
+                        sendButton.click();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
